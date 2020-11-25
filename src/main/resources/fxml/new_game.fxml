@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<AnchorPane prefHeight="600.0" prefWidth="900.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="mvc.view.NewGameView">
+
+    <Slider fx:id="slider1" layoutX="380.0" layoutY="100.0" prefHeight="16.0" prefWidth="400.0" />
+    <Slider fx:id="slider2" layoutX="380.0" layoutY="150.0" prefHeight="16.0" prefWidth="400.0" />
+    <Slider fx:id="slider3" layoutX="380.0" layoutY="200.0" prefHeight="16.0" prefWidth="400.0" />
+    <Slider fx:id="slider4" layoutX="380.0" layoutY="250.0" prefHeight="16.0" prefWidth="400.0" />
+    <Slider fx:id="slider5" layoutX="380.0" layoutY="300.0" prefHeight="16.0" prefWidth="400.0" />
+    <Slider fx:id="slider6" layoutX="380.0" layoutY="350.0" prefHeight="16.0" prefWidth="400.0" />
+    <Slider fx:id="slider7" layoutX="380.0" layoutY="400.0" prefHeight="16.0" prefWidth="400.0" />
+    <Slider fx:id="slider8" layoutX="380.0" layoutY="450.0" prefHeight="16.0" prefWidth="400.0" />
+    <Text layoutX="357.0" layoutY="60.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Параметры новой игры">
+      <font>
+         <Font size="18.0" />
+      </font></Text>
+   <Label layoutX="219.0" layoutY="100.0" text="Ширина поля в клетках" />
+   <Label layoutX="224.0" layoutY="150.0" text="Высота поля в клетках" />
+   <Label layoutX="25.0" layoutY="200.0" text="Количество клеток с едой, независимо от числа игроков" />
+   <Label layoutX="87.0" layoutY="250.0" text="Количество клеток с едой, на каждого игрока" />
+   <Label layoutX="141.0" layoutY="300.0" text="Задержка между ходами в игре (мс)" />
+   <Label layoutX="71.0" layoutY="350.0" text="Вероятность превращения мёртвой клетки в еду" />
+   <Label layoutX="63.0" layoutY="400.0" text="Задержка между отправкой ping-сообщений (мс)" />
+   <Label layoutX="43.0" layoutY="450.0" text="Таймаут, после которого считаем что узел отпал (мс)" />
+
+   <Label fx:id="label1" layoutX="800.0" layoutY="100.0" text="Label" />
+   <Label fx:id="label2" layoutX="800.0" layoutY="150.0" text="Label" />
+   <Label fx:id="label3" layoutX="800.0" layoutY="200.0" text="Label" />
+   <Label fx:id="label4" layoutX="800.0" layoutY="250.0" text="Label" />
+   <Label fx:id="label5" layoutX="800.0" layoutY="300.0" text="Label" />
+   <Label fx:id="label6" layoutX="800.0" layoutY="350.0" text="Label" />
+   <Label fx:id="label7" layoutX="800.0" layoutY="400.0" text="Label" />
+   <Label fx:id="label8" layoutX="800.0" layoutY="450.0" text="Label" />
+
+   <Button fx:id="button" layoutX="406.0" layoutY="519.0" mnemonicParsing="false" text="Начать игру"
+        onMouseClicked="#startNewGame"/>
+
+</AnchorPane>

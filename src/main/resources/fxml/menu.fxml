@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<AnchorPane prefHeight="600.0" prefWidth="900.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="mvc.view.MenuView">
+   <Button layoutX="383.0" layoutY="323.0" mnemonicParsing="false" onMouseClicked="#newGameButtonClicked" text="Создать новую игру" />
+   <Button layoutX="364.0" layoutY="371.0" mnemonicParsing="false" onMouseClicked="#gamesListButtonClicked" text="Посмотреть текущие игры" />
+   <Button layoutX="423.0" layoutY="419.0" mnemonicParsing="false" onMouseClicked="#exitButtonClicked" text="Выйти" />
+   <Text layoutX="400.0" layoutY="247.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Змейка">
+      <font>
+         <Font size="30.0" />
+      </font>
+   </Text>
+</AnchorPane>
