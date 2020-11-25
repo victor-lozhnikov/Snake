@@ -36,7 +36,7 @@
    <Label fx:id="label7" layoutX="800.0" layoutY="400.0" text="Label" />
    <Label fx:id="label8" layoutX="800.0" layoutY="450.0" text="Label" />
 
-   <Button fx:id="button" layoutX="406.0" layoutY="519.0" mnemonicParsing="false" text="Начать игру"
-        onMouseClicked="#startNewGame"/>
+   <Button fx:id="button" layoutX="406.0" layoutY="519.0" mnemonicParsing="false" onMouseClicked="#startNewGame" text="Начать игру" />
+   <Button layoutX="25.0" layoutY="40.0" mnemonicParsing="false" text="←" onMouseClicked="#returnBack" />
 
 </AnchorPane>

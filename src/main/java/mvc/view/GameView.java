@@ -52,7 +52,7 @@ public class GameView {
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                model.updateSnakes();
+                model.updateField();
                 Platform.runLater(() -> drawField());
             }
         }, model.getStateDelay(), model.getStateDelay());

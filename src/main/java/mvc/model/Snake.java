@@ -58,8 +58,10 @@ public class Snake {
     }
 
     public void makeMove(GameModel model) {
-        direction = nextDirection;
-        keyPoints.add(1, new int[] {0, 0});
+        if (direction != nextDirection) {
+            direction = nextDirection;
+            keyPoints.add(1, new int[] {0, 0});
+        }
 
         switch (direction) {
             case UP:

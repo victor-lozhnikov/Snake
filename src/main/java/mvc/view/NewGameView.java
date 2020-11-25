@@ -136,4 +136,13 @@ public class NewGameView {
         stage.show();
         parent.requestFocus();
     }
+
+    public void returnBack(MouseEvent event) throws IOException {
+        Parent parent = FXMLLoader.load(getClass().getResource("/fxml/menu.fxml"));
+        Scene scene = new Scene(parent);
+        Stage stage = (Stage)((Node) event.getSource()).getScene().getWindow();
+        stage.setScene(scene);
+        stage.show();
+        parent.requestFocus();
+    }
 }

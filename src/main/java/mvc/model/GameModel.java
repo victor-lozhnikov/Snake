@@ -195,7 +195,7 @@ public final class GameModel {
         }
     }
 
-    public void updateSnakes() {
+    public void updateField() {
         mySnake.makeMove(this);
         clearField();
         updateFood();
