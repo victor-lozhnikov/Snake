@@ -3,8 +3,6 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
-import mvc.controller.GameController;
-import mvc.model.GameModel;
 
 public class Main extends Application {
 

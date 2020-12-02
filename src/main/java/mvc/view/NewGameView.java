@@ -11,6 +11,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
+import main.java.net.protocol.SnakesProto;
 import mvc.model.GameModel;
 
 import java.io.IOException;
@@ -115,8 +116,7 @@ public class NewGameView {
     }
 
     public void startNewGame(MouseEvent event) throws IOException {
-        GameModel model = GameModel.getInstance();
-        model.init(
+        GameModel model = new GameModel(
                 Integer.parseInt(label1.getText()),
                 Integer.parseInt(label2.getText()),
                 Integer.parseInt(label3.getText()),
@@ -124,10 +124,12 @@ public class NewGameView {
                 Integer.parseInt(label5.getText()),
                 Float.parseFloat(label6.getText()),
                 Integer.parseInt(label7.getText()),
-                Integer.parseInt(label8.getText())
-                );
+                Integer.parseInt(label8.getText()),
+                SnakesProto.NodeRole.MASTER
+        );
 
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/game_view.fxml"));
+        loader.setControllerFactory(c -> new GameView(model));
         Parent parent = loader.load();
         Scene scene = new Scene(parent);
         Stage stage = (Stage)((Node) event.getSource()).getScene().getWindow();

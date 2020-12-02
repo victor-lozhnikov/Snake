@@ -1,27 +1,40 @@
 package mvc.model;
 
+import main.java.net.protocol.SnakesProto;
 import mvc.controller.GameController;
+import net.client.AnnouncementPinger;
+import net.client.Transmitter;
+import net.client.UnicastSender;
+import net.protocol.Constants;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.io.IOException;
+import java.util.*;
 
 public final class GameModel {
 
-    private static GameModel instance;
-    private GameController controller;
+    private final GameController controller;
 
-    private int fieldWidth;
-    private int fieldHeight;
-    private int foodStatic;
-    private float foodPerPlayer;
-    private int stateDelay;
-    private float deadFoodProb;
-    private int pingDelay;
-    private int nodeTimeout;
+    private final int fieldWidth;
+    private final int fieldHeight;
+    private final int foodStatic;
+    private final float foodPerPlayer;
+    private final int stateDelay;
+    private final float deadFoodProb;
+    private final int pingDelay;
+    private final int nodeTimeout;
 
-    private Snake mySnake;
-    List<int[]> food;
+    private int myId;
+    private List<SnakesProto.GamePlayer> gamePlayers;
+    private Map<SnakesProto.GamePlayer, Snake> snakeMap;
+    private List<int[]> food;
+    private Queue<Map.Entry<Integer, SnakesProto.GameMessage.SteerMsg>> steerMsgQueue;
+    private int lastMsgSeq = 1;
+
+    private SnakesProto.GameConfig gameConfig;
+    private SnakesProto.NodeRole nodeRole;
+    private Timer announcementPinger;
+    private UnicastSender unicastSender;
+    private Thread unicastSenderThread;
 
     public enum CellType {
         EMPTY,
@@ -32,29 +45,11 @@ public final class GameModel {
         FOOD
     }
 
-    private CellType[][] cells;
+    private final CellType[][] cells;
 
-    private GameModel() {
-        controller = GameController.getInstance(this);
-    }
-
-    public static synchronized GameModel getInstance() {
-        if (instance == null) {
-            instance = new GameModel();
-        }
-        return instance;
-    }
-
-    public int getFieldWidth() {
-        return fieldWidth;
-    }
-
-    public int getFieldHeight() {
-        return fieldHeight;
-    }
-
-    public void init(int fieldWidth, int fieldHeight, int foodStatic, float foodPerPlayer,
-                     int stateDelay, float deadFoodProb, int pingDelay, int nodeTimeout) {
+    public GameModel(int fieldWidth, int fieldHeight, int foodStatic, float foodPerPlayer,
+                     int stateDelay, float deadFoodProb, int pingDelay, int nodeTimeout,
+                     SnakesProto.NodeRole nodeRole) throws IOException {
         this.fieldWidth = fieldWidth;
         this.fieldHeight = fieldHeight;
         this.foodStatic = foodStatic;
@@ -63,11 +58,30 @@ public final class GameModel {
         this.deadFoodProb = deadFoodProb;
         this.pingDelay = pingDelay;
         this.nodeTimeout = nodeTimeout;
+        this.nodeRole = nodeRole;
 
+        controller = new GameController(this);
         cells = new CellType[fieldWidth][fieldHeight];
+
+        unicastSender = new UnicastSender();
+        unicastSenderThread = new Thread(unicastSender);
+        unicastSenderThread.start();
+        announcementPinger = new Timer();
+        announcementPinger.schedule(new AnnouncementPinger(this), 0, 1000);
+
         clearField();
+        createFirstPlayer();
         findPlaceAndAddSnake();
         initFood();
+        initGameConfig();
+    }
+
+    public int getFieldWidth() {
+        return fieldWidth;
+    }
+
+    public int getFieldHeight() {
+        return fieldHeight;
     }
 
     private void findPlaceAndAddSnake() {
@@ -99,16 +113,16 @@ public final class GameModel {
             return;
         }
 
-        mySnake = new Snake(stX + 2, stY + 2,
+        /*mySnake = new Snake(stX + 2, stY + 2,
                 Snake.Direction.values()[(new Random()).nextInt(4)]);
-        addSnakeToField(mySnake);
+        addSnakeBodyToField(mySnake);
+        addSnakeHeadToField(mySnake);*/
     }
 
-    public void addSnakeToField(Snake snake) {
+    public void addSnakeBodyToField(Snake snake) {
         List<int[]> points = snake.getKeyPoints();
         int curX = points.get(0)[0];
         int curY = points.get(0)[1];
-        cells[curX][curY] = CellType.MY_HEAD;
         for (int i = 1; i < points.size(); ++i) {
             if (points.get(i)[0] > 0) {
                 for (int j = 1; j <= points.get(i)[0]; ++j) {
@@ -134,6 +148,18 @@ public final class GameModel {
                 }
                 curY += points.get(i)[1];
             }
+        }
+
+    }
+
+    public void addSnakeHeadToField(Snake snake) {
+        List<int[]> points = snake.getKeyPoints();
+        if (cells[points.get(0)[0]][points.get(0)[1]] == CellType.EMPTY) {
+            cells[points.get(0)[0]][points.get(0)[1]] = CellType.MY_HEAD;
+        }
+        else {
+            //TODO: remove snake
+            return;
         }
     }
 
@@ -183,10 +209,6 @@ public final class GameModel {
         return cells[x][y];
     }
 
-    public Snake getMySnake() {
-        return mySnake;
-    }
-
     public void clearField() {
         for (int i = 0; i < fieldWidth; ++i) {
             for (int j = 0; j < fieldHeight; ++j) {
@@ -195,12 +217,13 @@ public final class GameModel {
         }
     }
 
-    public void updateField() {
+    /*public void updateField() {
         mySnake.makeMove(this);
         clearField();
+        addSnakeBodyToField(mySnake);
+        addSnakeHeadToField(mySnake);
         updateFood();
-        addSnakeToField(mySnake);
-    }
+    }*/
 
     public int getFoodStatic() {
         return foodStatic;
@@ -226,6 +249,10 @@ public final class GameModel {
         return nodeTimeout;
     }
 
+    public GameController getController() {
+        return controller;
+    }
+
     public CellType[][] getCells() {
         return cells;
     }
@@ -237,5 +264,71 @@ public final class GameModel {
                 break;
             }
         }
+    }
+
+    public void initGameConfig() {
+        SnakesProto.GameConfig.Builder gameConfigBuilder = SnakesProto.GameConfig.newBuilder();
+        gameConfigBuilder.setWidth(fieldWidth);
+        gameConfigBuilder.setHeight(fieldHeight);
+        gameConfigBuilder.setFoodStatic(foodStatic);
+        gameConfigBuilder.setFoodPerPlayer(foodPerPlayer);
+        gameConfigBuilder.setStateDelayMs(stateDelay);
+        gameConfigBuilder.setDeadFoodProb(deadFoodProb);
+        gameConfigBuilder.setPingDelayMs(pingDelay);
+        gameConfigBuilder.setNodeTimeoutMs(nodeTimeout);
+        gameConfig = gameConfigBuilder.build();
+    }
+
+    public SnakesProto.GameConfig getGameConfig() {
+        return gameConfig;
+    }
+
+    public SnakesProto.GamePlayers getGamePlayers() {
+        SnakesProto.GamePlayers.Builder gamePlayersBuilder = SnakesProto.GamePlayers.newBuilder();
+        for (SnakesProto.GamePlayer player : gamePlayers) {
+            gamePlayersBuilder.addPlayers(player);
+        }
+        return gamePlayersBuilder.build();
+    }
+
+    public void createFirstPlayer() {
+        gamePlayers = new ArrayList<>();
+        SnakesProto.GamePlayer.Builder gamePlayerBuilder = SnakesProto.GamePlayer.newBuilder();
+        gamePlayerBuilder.setName("Victor");
+        gamePlayerBuilder.setId(1);
+        gamePlayerBuilder.setIpAddress("");
+        gamePlayerBuilder.setPort(Constants.UDP_PORT);
+        gamePlayerBuilder.setRole(nodeRole);
+        gamePlayerBuilder.setScore(0);
+        gamePlayers.add(gamePlayerBuilder.build());
+    }
+
+    public int getMyId() {
+        return myId;
+    }
+
+    public SnakesProto.NodeRole getNodeRole() {
+        return nodeRole;
+    }
+
+    public void addNewSteerMsg(int id, SnakesProto.GameMessage.SteerMsg msg) {
+        steerMsgQueue.add(new AbstractMap.SimpleEntry<>(id, msg));
+    }
+
+    public UnicastSender getUnicastSender() {
+        return unicastSender;
+    }
+
+    public int getLastMsgSeq() {
+        return lastMsgSeq;
+    }
+
+    public void iterateLastMsqSeq() {
+        lastMsgSeq++;
+    }
+
+    public void destroy() {
+        announcementPinger.cancel();
+        unicastSenderThread.interrupt();
     }
 }

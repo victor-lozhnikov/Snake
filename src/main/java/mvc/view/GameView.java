@@ -16,8 +16,8 @@ import java.util.TimerTask;
 
 public class GameView {
 
-    GameModel model = GameModel.getInstance();
-    GameController controller = GameController.getInstance(model);
+    GameModel model;
+    GameController controller;
 
     public Canvas cells;
     GraphicsContext graphicsContext;
@@ -40,22 +40,27 @@ public class GameView {
         cellColors.put(GameModel.CellType.FOOD, Color.RED);
     }
 
-    public void initialize() {
-        calculateSizes();
-        graphicsContext = cells.getGraphicsContext2D();
-        drawField();
-        initTimer();
+    public GameView(GameModel model) {
+        this.model = model;
+        controller = model.getController();
     }
 
     public void initTimer() {
         timer = new Timer();
-        timer.scheduleAtFixedRate(new TimerTask() {
+        /*timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
                 model.updateField();
                 Platform.runLater(() -> drawField());
             }
-        }, model.getStateDelay(), model.getStateDelay());
+        }, model.getStateDelay(), model.getStateDelay());*/
+    }
+
+    public void initialize() {
+        calculateSizes();
+        graphicsContext = cells.getGraphicsContext2D();
+        drawField();
+        initTimer();
     }
 
     private void calculateSizes() {
@@ -109,6 +114,7 @@ public class GameView {
     @FXML
     public void exitApplication() {
         timer.cancel();
+        model.destroy();
         Platform.exit();
     }
 }

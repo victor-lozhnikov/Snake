@@ -1,37 +1,59 @@
 package mvc.controller;
 
+import main.java.net.protocol.SnakesProto;
 import mvc.model.GameModel;
-import mvc.model.Snake;
 
 public final class GameController {
 
-    private static GameController instance;
     private GameModel model;
 
-    private GameController(GameModel model) {
+    public GameController(GameModel model) {
         this.model = model;
     }
 
-    public static synchronized GameController getInstance(GameModel model) {
-        if (instance == null) {
-            instance = new GameController(model);
-        }
-        return instance;
-    }
-
     public void moveUp() {
-        model.getMySnake().trySetDirection(Snake.Direction.UP);
+        SnakesProto.GameMessage.SteerMsg msg = buildSteerMsg(SnakesProto.Direction.UP);
+        if (model.getNodeRole() == SnakesProto.NodeRole.MASTER) {
+            model.addNewSteerMsg(model.getMyId(), msg);
+        }
+        else {
+
+        }
     }
 
     public void moveDown() {
-        model.getMySnake().trySetDirection(Snake.Direction.DOWN);
+        SnakesProto.GameMessage.SteerMsg msg = buildSteerMsg(SnakesProto.Direction.DOWN);
+        if (model.getNodeRole() == SnakesProto.NodeRole.MASTER) {
+            model.addNewSteerMsg(model.getMyId(), msg);
+        }
+        else {
+
+        }
     }
 
     public void moveRight() {
-        model.getMySnake().trySetDirection(Snake.Direction.RIGHT);
+        SnakesProto.GameMessage.SteerMsg msg = buildSteerMsg(SnakesProto.Direction.RIGHT);
+        if (model.getNodeRole() == SnakesProto.NodeRole.MASTER) {
+            model.addNewSteerMsg(model.getMyId(), msg);
+        }
+        else {
+
+        }
     }
 
     public void moveLeft() {
-        model.getMySnake().trySetDirection(Snake.Direction.LEFT);
+        SnakesProto.GameMessage.SteerMsg msg = buildSteerMsg(SnakesProto.Direction.LEFT);
+        if (model.getNodeRole() == SnakesProto.NodeRole.MASTER) {
+            model.addNewSteerMsg(model.getMyId(), msg);
+        }
+        else {
+
+        }
+    }
+
+    SnakesProto.GameMessage.SteerMsg buildSteerMsg(SnakesProto.Direction direction) {
+        SnakesProto.GameMessage.SteerMsg.Builder steerMsgBuilder = SnakesProto.GameMessage.SteerMsg.newBuilder();
+        steerMsgBuilder.setDirection(direction);
+        return steerMsgBuilder.build();
     }
 }

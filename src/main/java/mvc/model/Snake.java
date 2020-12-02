@@ -1,17 +1,12 @@
 package mvc.model;
 
+import main.java.net.protocol.SnakesProto.Direction;
+
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
 public class Snake {
-
-    public enum Direction {
-        UP,
-        DOWN,
-        LEFT,
-        RIGHT
-    }
 
     private Direction direction;
     private Direction nextDirection;
