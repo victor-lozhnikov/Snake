@@ -1,5 +1,6 @@
 package mvc.model;
 
+import main.java.net.protocol.SnakesProto;
 import main.java.net.protocol.SnakesProto.Direction;
 
 import java.util.ArrayList;
@@ -13,12 +14,14 @@ public class Snake {
     private List<int[]> keyPoints;
     private GameModel model;
     private int id;
+    private SnakesProto.GameState.Snake.SnakeState state;
 
     public Snake(GameModel model, int id, int headX, int headY, Direction direction) {
         this.model = model;
         this.id = id;
         this.direction = direction;
         this.nextDirection = direction;
+        this.state = SnakesProto.GameState.Snake.SnakeState.ALIVE;
         keyPoints = new ArrayList<>();
         keyPoints.add(new int[] {headX, headY});
         switch (direction) {
@@ -34,6 +37,19 @@ public class Snake {
             case RIGHT:
                 keyPoints.add(new int[] {-1, 0});
                 break;
+        }
+    }
+
+    public Snake(SnakesProto.GameState.Snake snake, GameModel model) {
+        this.model = model;
+        this.id = snake.getPlayerId();
+        this.direction = snake.getHeadDirection();
+        this.nextDirection = snake.getHeadDirection();
+        this.state = snake.getState();
+
+        keyPoints = new ArrayList<>();
+        for (SnakesProto.GameState.Coord coords : snake.getPointsList()) {
+            keyPoints.add(new int[] {coords.getX(), coords.getY()});
         }
     }
 
@@ -109,5 +125,19 @@ public class Snake {
 
     public int getId() {
         return id;
+    }
+
+    public SnakesProto.GameState.Snake convertSnakeForMsg() {
+        SnakesProto.GameState.Snake.Builder builder = SnakesProto.GameState.Snake.newBuilder();
+        builder.setState(state);
+        builder.setPlayerId(id);
+        for (int[] coords : keyPoints) {
+            SnakesProto.GameState.Coord.Builder coordsBuilder = SnakesProto.GameState.Coord.newBuilder();
+            coordsBuilder.setX(coords[0]);
+            coordsBuilder.setY(coords[1]);
+            builder.addPoints(coordsBuilder);
+            builder.setHeadDirection(direction);
+        }
+        return builder.build();
     }
 }

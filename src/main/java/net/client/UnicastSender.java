@@ -8,35 +8,49 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.SocketException;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class UnicastSender implements Runnable {
-    private Set<MessageWithAdditionalInfo> messageQueue;
+    private Map<Long, MessageWithAdditionalInfo> messageQueue;
     private GameModel model;
 
     public UnicastSender(GameModel model) throws IOException {
         this.model = model;
-        messageQueue = Collections.newSetFromMap(new ConcurrentHashMap<>());
+        messageQueue = new ConcurrentHashMap<>();
     }
 
     public void sendMessage(SnakesProto.GameMessage message, InetAddress address, int port) {
-        messageQueue.add(new MessageWithAdditionalInfo(message, address, port));
+        messageQueue.put(message.getMsgSeq(), new MessageWithAdditionalInfo(message, address, port));
+    }
+
+    public void removeMessageFromQueue(long seq) {
+        messageQueue.remove(seq);
     }
 
     @Override
     public void run() {
         while (!Thread.currentThread().isInterrupted()) {
-            for (MessageWithAdditionalInfo message : messageQueue) {
-                DatagramPacket packet = new DatagramPacket(message.getMessage().toByteArray(),
-                        message.getMessage().toByteArray().length, message.getAddress(), message.getPort());
+            for (Map.Entry<Long, MessageWithAdditionalInfo> message : messageQueue.entrySet()) {
+
+                if (System.currentTimeMillis() - message.getValue().getLastSentTime() < model.getPingDelay()) {
+                    continue;
+                }
+
+                DatagramPacket packet = new DatagramPacket(message.getValue().getMessage().toByteArray(),
+                        message.getValue().getMessage().toByteArray().length,
+                        message.getValue().getAddress(), message.getValue().getPort());
                 try {
                     model.getUnicastSocket().send(packet);
-                    if (message.getMessage().hasAnnouncement() || message.getMessage().hasAck()) {
-                        messageQueue.remove(message);
+                    message.getValue().setLastSentTime(System.currentTimeMillis());
+                    if (message.getValue().getMessage().hasAnnouncement() || message.getValue().getMessage().hasAck()) {
+                        messageQueue.remove(message.getKey());
                     }
                 }
+                catch (SocketException ignored) {}
                 catch (IOException ex) {
                     ex.printStackTrace();
                 }

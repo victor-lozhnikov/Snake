@@ -14,9 +14,11 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import main.java.net.protocol.SnakesProto;
+import mvc.model.GameModel;
 import net.client.MulticastReceiver;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,7 +31,8 @@ public class GamesListView {
     private ListProperty<Text> gameListProperty;
     private MulticastReceiver multicastReceiver;
     private Thread multicastReceiverThread;
-    private Map<Text, SocketAddress> addressMap;
+    private Map<Text, InetSocketAddress> addressMap;
+    private Map<Text, SnakesProto.GameMessage.AnnouncementMsg> announcementMap;
 
     public void initialize() {
         try {
@@ -39,6 +42,7 @@ public class GamesListView {
             gameListProperty = new SimpleListProperty<>();
             gameListView.itemsProperty().bind(gameListProperty);
             addressMap = new ConcurrentHashMap<>();
+            announcementMap = new ConcurrentHashMap<>();
         }
         catch (IOException ex) {
             ex.printStackTrace();
@@ -47,7 +51,7 @@ public class GamesListView {
 
     public void update() {
         List<Text> gameList = new ArrayList<>();
-        for (Map.Entry<SocketAddress, SnakesProto.GameMessage.AnnouncementMsg> entry :
+        for (Map.Entry<InetSocketAddress, SnakesProto.GameMessage.AnnouncementMsg> entry :
                 multicastReceiver.getCurrentAnnouncements().entrySet()) {
             Text text = new Text(
                     entry.getKey() + "\n" +
@@ -58,6 +62,7 @@ public class GamesListView {
                     );
             gameList.add(text);
             addressMap.put(text, entry.getKey());
+            announcementMap.put(text, entry.getValue());
         }
         gameListProperty.setValue(FXCollections.observableArrayList(gameList));
     }
@@ -78,9 +83,23 @@ public class GamesListView {
         Platform.exit();
     }
 
-    public void onMouseClicked(MouseEvent event) {
+    public void onMouseClicked(MouseEvent event) throws IOException {
         Text selectedText = gameListView.getSelectionModel().getSelectedItem();
         if (selectedText == null) return;
-
+        InetSocketAddress address = addressMap.get(selectedText);
+        SnakesProto.GameConfig config = announcementMap.get(selectedText).getConfig();
+        GameModel model = new GameModel("name", address, config);
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/game_view.fxml"));
+        GameView gameView = new GameView(model);
+        model.setGameView(gameView);
+        loader.setControllerFactory(c -> gameView);
+        Parent parent = loader.load();
+        Scene scene = new Scene(parent);
+        Stage stage = (Stage)((Node) event.getSource()).getScene().getWindow();
+        stage.setScene(scene);
+        stage.setOnCloseRequest(e -> ((GameView) loader.getController()).exitApplication());
+        stage.show();
+        parent.requestFocus();
+        multicastReceiverThread.interrupt();
     }
 }

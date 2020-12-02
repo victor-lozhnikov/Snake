@@ -14,14 +14,14 @@ import java.util.concurrent.ConcurrentHashMap;
 public class MulticastReceiver implements Runnable {
     private GamesListView gamesListView;
     private final MulticastSocket socket;
-    private Map<SocketAddress, SnakesProto.GameMessage.AnnouncementMsg> currentAnnouncements;
+    private Map<InetSocketAddress, SnakesProto.GameMessage.AnnouncementMsg> currentAnnouncements;
 
     public MulticastReceiver(GamesListView gamesListView) throws IOException {
         InetAddress group = InetAddress.getByName(Constants.MULTICAST_IP);
         socket = new MulticastSocket(Constants.MULTICAST_PORT);
         socket.joinGroup(new InetSocketAddress(group, Constants.MULTICAST_PORT),
                 NetworkInterface.getByInetAddress(group));
-        socket.setSoTimeout(1000);
+        socket.setSoTimeout(Constants.MULTICAST_SOCKET_TIMEOUT);
         this.gamesListView = gamesListView;
         currentAnnouncements = new ConcurrentHashMap<>();
     }
@@ -34,7 +34,7 @@ public class MulticastReceiver implements Runnable {
                 socket.receive(packet);
                 SnakesProto.GameMessage message = SnakesProto.GameMessage.parseFrom(
                         Arrays.copyOf(packet.getData(), packet.getLength()));
-                currentAnnouncements.put(packet.getSocketAddress(), message.getAnnouncement());
+                currentAnnouncements.put((InetSocketAddress) packet.getSocketAddress(), message.getAnnouncement());
                 Platform.runLater(() -> gamesListView.update());
             }
             catch (SocketTimeoutException ignored) {}
@@ -45,7 +45,7 @@ public class MulticastReceiver implements Runnable {
         socket.close();
     }
 
-    public Map<SocketAddress, SnakesProto.GameMessage.AnnouncementMsg> getCurrentAnnouncements() {
+    public Map<InetSocketAddress, SnakesProto.GameMessage.AnnouncementMsg> getCurrentAnnouncements() {
         return currentAnnouncements;
     }
 }

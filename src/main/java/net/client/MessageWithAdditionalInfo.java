@@ -8,7 +8,7 @@ public class MessageWithAdditionalInfo {
     private SnakesProto.GameMessage message;
     private InetAddress address;
     private int port;
-    private long lastSentTime;
+    private long lastSentTime = 0L;
 
     public MessageWithAdditionalInfo(SnakesProto.GameMessage message, InetAddress address, int port) {
         this.message = message;
