@@ -1,6 +1,8 @@
 package net.client;
 
 import main.java.net.protocol.SnakesProto;
+import mvc.model.GameModel;
+import net.protocol.Constants;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -12,11 +14,11 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class UnicastSender implements Runnable {
     private Set<MessageWithAdditionalInfo> messageQueue;
-    private DatagramSocket socket;
+    private GameModel model;
 
-    public UnicastSender() throws IOException {
+    public UnicastSender(GameModel model) throws IOException {
+        this.model = model;
         messageQueue = Collections.newSetFromMap(new ConcurrentHashMap<>());
-        socket = new DatagramSocket();
     }
 
     public void sendMessage(SnakesProto.GameMessage message, InetAddress address, int port) {
@@ -30,14 +32,13 @@ public class UnicastSender implements Runnable {
                 DatagramPacket packet = new DatagramPacket(message.getMessage().toByteArray(),
                         message.getMessage().toByteArray().length, message.getAddress(), message.getPort());
                 try {
-                    socket.send(packet);
+                    model.getUnicastSocket().send(packet);
                     if (message.getMessage().hasAnnouncement() || message.getMessage().hasAck()) {
-                        System.out.println("Announcement sent");
                         messageQueue.remove(message);
                     }
                 }
                 catch (IOException ex) {
-                    System.err.println("Can't send message");
+                    ex.printStackTrace();
                 }
             }
         }

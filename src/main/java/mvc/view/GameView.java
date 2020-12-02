@@ -11,25 +11,22 @@ import mvc.model.GameModel;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
 
 public class GameView {
 
-    GameModel model;
-    GameController controller;
+    private GameModel model;
+    private GameController controller;
 
-    public Canvas cells;
-    GraphicsContext graphicsContext;
+    @FXML
+    private Canvas cells;
+    private GraphicsContext graphicsContext;
 
     private double maxFieldSize = 560.0;
     private double fieldWidth;
     private double fieldHeight;
     private double cellSize;
-    Timer timer;
-    boolean pause = false;
 
-    static Map<GameModel.CellType, Color> cellColors;
+    private final static Map<GameModel.CellType, Color> cellColors;
     static {
         cellColors = new HashMap<>();
         cellColors.put(GameModel.CellType.EMPTY, Color.WHITE);
@@ -45,22 +42,10 @@ public class GameView {
         controller = model.getController();
     }
 
-    public void initTimer() {
-        timer = new Timer();
-        /*timer.scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
-                model.updateField();
-                Platform.runLater(() -> drawField());
-            }
-        }, model.getStateDelay(), model.getStateDelay());*/
-    }
-
     public void initialize() {
         calculateSizes();
         graphicsContext = cells.getGraphicsContext2D();
         drawField();
-        initTimer();
     }
 
     private void calculateSizes() {
@@ -75,7 +60,7 @@ public class GameView {
         cells.setHeight(fieldHeight);
     }
 
-    private void drawField() {
+    public void drawField() {
         for (int i = 0; i < model.getFieldWidth(); ++i) {
             for (int j = 0; j < model.getFieldHeight(); ++j) {
                 graphicsContext.setFill(cellColors.get(model.getCellTypeByCoordinates(i, j)));
@@ -99,21 +84,11 @@ public class GameView {
             case LEFT:
                 controller.moveLeft();
                 break;
-            case SPACE:
-                if (!pause) {
-                    timer.cancel();
-                    pause = true;
-                }
-                else {
-                    initTimer();
-                    pause = false;
-                }
         }
     }
 
     @FXML
     public void exitApplication() {
-        timer.cancel();
         model.destroy();
         Platform.exit();
     }

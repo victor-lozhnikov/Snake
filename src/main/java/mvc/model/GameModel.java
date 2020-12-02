@@ -2,17 +2,21 @@ package mvc.model;
 
 import main.java.net.protocol.SnakesProto;
 import mvc.controller.GameController;
+import mvc.view.GameView;
 import net.client.AnnouncementPinger;
-import net.client.Transmitter;
 import net.client.UnicastSender;
 import net.protocol.Constants;
 
 import java.io.IOException;
+import java.net.DatagramSocket;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedDeque;
 
 public final class GameModel {
 
     private final GameController controller;
+    private GameView gameView;
 
     private final int fieldWidth;
     private final int fieldHeight;
@@ -24,17 +28,21 @@ public final class GameModel {
     private final int nodeTimeout;
 
     private int myId;
-    private List<SnakesProto.GamePlayer> gamePlayers;
-    private Map<SnakesProto.GamePlayer, Snake> snakeMap;
+    private Map<Integer, SnakesProto.GamePlayer> gamePlayers;
+    private Map<Integer, Snake> snakeMap;
     private List<int[]> food;
     private Queue<Map.Entry<Integer, SnakesProto.GameMessage.SteerMsg>> steerMsgQueue;
     private int lastMsgSeq = 1;
+    private int lastId = 1;
 
     private SnakesProto.GameConfig gameConfig;
     private SnakesProto.NodeRole nodeRole;
     private Timer announcementPinger;
     private UnicastSender unicastSender;
     private Thread unicastSenderThread;
+    private DatagramSocket unicastSocket;
+    private GameStateUpdater gameStateUpdater;
+    private Timer gameStateUpdaterTimer;
 
     public enum CellType {
         EMPTY,
@@ -49,7 +57,7 @@ public final class GameModel {
 
     public GameModel(int fieldWidth, int fieldHeight, int foodStatic, float foodPerPlayer,
                      int stateDelay, float deadFoodProb, int pingDelay, int nodeTimeout,
-                     SnakesProto.NodeRole nodeRole) throws IOException {
+                     SnakesProto.NodeRole nodeRole, String name) throws IOException {
         this.fieldWidth = fieldWidth;
         this.fieldHeight = fieldHeight;
         this.foodStatic = foodStatic;
@@ -60,20 +68,30 @@ public final class GameModel {
         this.nodeTimeout = nodeTimeout;
         this.nodeRole = nodeRole;
 
+        initGameConfig();
+
         controller = new GameController(this);
         cells = new CellType[fieldWidth][fieldHeight];
+        snakeMap = new ConcurrentHashMap<>();
+        steerMsgQueue = new ConcurrentLinkedDeque<>();
 
-        unicastSender = new UnicastSender();
+        unicastSocket = new DatagramSocket(0);
+        unicastSender = new UnicastSender(this);
         unicastSenderThread = new Thread(unicastSender);
         unicastSenderThread.start();
         announcementPinger = new Timer();
-        announcementPinger.schedule(new AnnouncementPinger(this), 0, 1000);
+        announcementPinger.schedule(new AnnouncementPinger(this),
+                0, Constants.ANNOUNCEMENT_PING_PERIOD);
 
         clearField();
-        createFirstPlayer();
-        findPlaceAndAddSnake();
+        createFirstPlayer(name);
         initFood();
-        initGameConfig();
+
+        if (nodeRole == SnakesProto.NodeRole.MASTER) {
+            gameStateUpdater = new GameStateUpdater(this);
+            gameStateUpdaterTimer = new Timer();
+            gameStateUpdaterTimer.schedule(gameStateUpdater, stateDelay, stateDelay);
+        }
     }
 
     public int getFieldWidth() {
@@ -84,7 +102,7 @@ public final class GameModel {
         return fieldHeight;
     }
 
-    private void findPlaceAndAddSnake() {
+    private Snake findPlaceAndCreateSnake(int id) {
         int stX = -1;
         int stY = -1;
         for (int i = 0; i <= fieldWidth - 5; ++i) {
@@ -109,14 +127,11 @@ public final class GameModel {
             }
         }
         if (stX < 0) {
-            //place for snake not found
-            return;
+            return null;
         }
 
-        /*mySnake = new Snake(stX + 2, stY + 2,
-                Snake.Direction.values()[(new Random()).nextInt(4)]);
-        addSnakeBodyToField(mySnake);
-        addSnakeHeadToField(mySnake);*/
+        return new Snake(this, id, stX + 2, stY + 2,
+                SnakesProto.Direction.values()[(new Random()).nextInt(4)]);
     }
 
     public void addSnakeBodyToField(Snake snake) {
@@ -158,7 +173,7 @@ public final class GameModel {
             cells[points.get(0)[0]][points.get(0)[1]] = CellType.MY_HEAD;
         }
         else {
-            //TODO: remove snake
+            //TODO: remove snake(s)
             return;
         }
     }
@@ -285,22 +300,26 @@ public final class GameModel {
 
     public SnakesProto.GamePlayers getGamePlayers() {
         SnakesProto.GamePlayers.Builder gamePlayersBuilder = SnakesProto.GamePlayers.newBuilder();
-        for (SnakesProto.GamePlayer player : gamePlayers) {
+        for (SnakesProto.GamePlayer player : gamePlayers.values()) {
             gamePlayersBuilder.addPlayers(player);
         }
         return gamePlayersBuilder.build();
     }
 
-    public void createFirstPlayer() {
-        gamePlayers = new ArrayList<>();
+    public void createFirstPlayer(String name) {
+        gamePlayers = new ConcurrentHashMap<>();
         SnakesProto.GamePlayer.Builder gamePlayerBuilder = SnakesProto.GamePlayer.newBuilder();
-        gamePlayerBuilder.setName("Victor");
+        gamePlayerBuilder.setName(name);
         gamePlayerBuilder.setId(1);
         gamePlayerBuilder.setIpAddress("");
-        gamePlayerBuilder.setPort(Constants.UDP_PORT);
+        gamePlayerBuilder.setPort(unicastSocket.getPort());
         gamePlayerBuilder.setRole(nodeRole);
         gamePlayerBuilder.setScore(0);
-        gamePlayers.add(gamePlayerBuilder.build());
+        myId = 1;
+        gamePlayers.put(myId, gamePlayerBuilder.build());
+        snakeMap.put(myId, findPlaceAndCreateSnake(myId));
+        addSnakeBodyToField(snakeMap.get(myId));
+        addSnakeHeadToField(snakeMap.get(myId));
     }
 
     public int getMyId() {
@@ -327,8 +346,42 @@ public final class GameModel {
         lastMsgSeq++;
     }
 
+    public DatagramSocket getUnicastSocket() {
+        return unicastSocket;
+    }
+
+    public Queue<Map.Entry<Integer, SnakesProto.GameMessage.SteerMsg>> getSteerMsgQueue() {
+        return steerMsgQueue;
+    }
+
+    public void clearSteerMsgQueue() {
+        steerMsgQueue.clear();
+    }
+
+    public Snake getSnakeById (int id) {
+        return snakeMap.get(id);
+    }
+
+    public Map<Integer, Snake> getSnakeMap() {
+        return snakeMap;
+    }
+
+    public GameView getGameView() {
+        return gameView;
+    }
+
+    public void setGameView(GameView gameView) {
+        this.gameView = gameView;
+    }
+
+    public Map<Integer, SnakesProto.GamePlayer> getGamePlayersMap() {
+        return gamePlayers;
+    }
+
     public void destroy() {
         announcementPinger.cancel();
         unicastSenderThread.interrupt();
+        gameStateUpdaterTimer.cancel();
+        unicastSocket.close();
     }
 }

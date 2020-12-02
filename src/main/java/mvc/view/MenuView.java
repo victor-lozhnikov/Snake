@@ -22,10 +22,12 @@ public class MenuView {
     }
 
     public void gamesListButtonClicked(MouseEvent event) throws IOException {
-        Parent parent = FXMLLoader.load(getClass().getResource("/fxml/games_list.fxml"));
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/games_list.fxml"));
+        Parent parent = loader.load();
         Scene scene = new Scene(parent);
         Stage stage = (Stage)((Node) event.getSource()).getScene().getWindow();
         stage.setScene(scene);
+        stage.setOnCloseRequest(e -> ((GamesListView) loader.getController()).exitApplication());
         stage.show();
         parent.requestFocus();
     }

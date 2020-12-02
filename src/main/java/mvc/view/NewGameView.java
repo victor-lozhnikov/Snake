@@ -9,7 +9,9 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
+import javafx.scene.control.TextField;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import main.java.net.protocol.SnakesProto;
 import mvc.model.GameModel;
@@ -37,6 +39,9 @@ public class NewGameView {
     public Label label8;
 
     public Button button;
+
+    public TextField nameField;
+    public Text nameErrorLabel;
 
     public void initialize() {
         slider1.setMin(10);
@@ -116,6 +121,11 @@ public class NewGameView {
     }
 
     public void startNewGame(MouseEvent event) throws IOException {
+        if (nameField.getText().isBlank()) {
+            nameErrorLabel.setText("!");
+            return;
+        }
+
         GameModel model = new GameModel(
                 Integer.parseInt(label1.getText()),
                 Integer.parseInt(label2.getText()),
@@ -125,11 +135,14 @@ public class NewGameView {
                 Float.parseFloat(label6.getText()),
                 Integer.parseInt(label7.getText()),
                 Integer.parseInt(label8.getText()),
-                SnakesProto.NodeRole.MASTER
+                SnakesProto.NodeRole.MASTER,
+                nameField.getText()
         );
 
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/game_view.fxml"));
-        loader.setControllerFactory(c -> new GameView(model));
+        GameView gameView = new GameView(model);
+        model.setGameView(gameView);
+        loader.setControllerFactory(c -> gameView);
         Parent parent = loader.load();
         Scene scene = new Scene(parent);
         Stage stage = (Stage)((Node) event.getSource()).getScene().getWindow();

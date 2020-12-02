@@ -11,8 +11,12 @@ public class Snake {
     private Direction direction;
     private Direction nextDirection;
     private List<int[]> keyPoints;
+    private GameModel model;
+    private int id;
 
-    public Snake(int headX, int headY, Direction direction) {
+    public Snake(GameModel model, int id, int headX, int headY, Direction direction) {
+        this.model = model;
+        this.id = id;
         this.direction = direction;
         this.nextDirection = direction;
         keyPoints = new ArrayList<>();
@@ -52,7 +56,7 @@ public class Snake {
         nextDirection = newDirection;
     }
 
-    public void makeMove(GameModel model) {
+    public void makeMove() {
         if (direction != nextDirection) {
             direction = nextDirection;
             keyPoints.add(1, new int[] {0, 0});
@@ -101,5 +105,9 @@ public class Snake {
         if (keyPoints.get(keyPoints.size() - 1)[0] == 0 && keyPoints.get(keyPoints.size() - 1)[1] == 0) {
             keyPoints.remove(keyPoints.size() - 1);
         }
+    }
+
+    public int getId() {
+        return id;
     }
 }

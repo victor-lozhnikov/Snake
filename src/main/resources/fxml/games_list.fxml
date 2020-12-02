@@ -1,14 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import java.lang.*?>
-<?import java.util.*?>
-<?import javafx.scene.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
 
-<AnchorPane xmlns="http://javafx.com/javafx"
-            xmlns:fx="http://javafx.com/fxml"
-            fx:controller="mvc.view.GamesListView"
-            prefHeight="600.0" prefWidth="900.0">
+<AnchorPane prefHeight="600.0" prefWidth="900.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="mvc.view.GamesListView">
+
+    <Text layoutX="384.0" layoutY="60.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Доступные игры">
+        <font>
+            <Font size="18.0" />
+        </font>
+    </Text>
+
+    <Button layoutX="25.0" layoutY="40.0" mnemonicParsing="false" onMouseClicked="#returnBack" text="←" />
+    <ListView fx:id="gameListView" layoutX="150.0" layoutY="100.0" prefHeight="400.0" prefWidth="600.0" onMouseClicked="#onMouseClicked" />
 
 </AnchorPane>
