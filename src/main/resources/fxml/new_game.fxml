@@ -43,7 +43,7 @@
 
     <Button fx:id="button" layoutX="406.0" layoutY="550.0" mnemonicParsing="false" onMouseClicked="#startNewGame" text="Начать игру" />
     <Button layoutX="25.0" layoutY="40.0" mnemonicParsing="false" onMouseClicked="#returnBack" text="←" />
-    <Text fx:id="nameErrorLabel" fill="RED" layoutX="808.0" layoutY="519.0" strokeType="OUTSIDE" strokeWidth="0.0" wrappingWidth="14.0">
+    <Text fx:id="nameErrorLabel" fill="RED" layoutX="808.0" layoutY="520.0" strokeType="OUTSIDE" strokeWidth="0.0" wrappingWidth="14.0">
       <font>
          <Font name="System Bold" size="30.0" />
       </font>

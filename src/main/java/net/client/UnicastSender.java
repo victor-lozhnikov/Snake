@@ -2,16 +2,12 @@ package net.client;
 
 import main.java.net.protocol.SnakesProto;
 import mvc.model.GameModel;
-import net.protocol.Constants;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
-import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
-import java.util.Collections;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class UnicastSender implements Runnable {

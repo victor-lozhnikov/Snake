@@ -10,6 +10,7 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.ListView;
+import javafx.scene.control.TextField;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
@@ -19,7 +20,6 @@ import net.client.MulticastReceiver;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +28,10 @@ import java.util.concurrent.ConcurrentHashMap;
 public class GamesListView {
     @FXML
     private ListView<Text> gameListView;
+    @FXML
+    private TextField nameField;
+    @FXML
+    private Text nameErrorLabel;
     private ListProperty<Text> gameListProperty;
     private MulticastReceiver multicastReceiver;
     private Thread multicastReceiverThread;
@@ -86,9 +90,13 @@ public class GamesListView {
     public void onMouseClicked(MouseEvent event) throws IOException {
         Text selectedText = gameListView.getSelectionModel().getSelectedItem();
         if (selectedText == null) return;
+        if (nameField.getText().isBlank()) {
+            nameErrorLabel.setText("!");
+            return;
+        }
         InetSocketAddress address = addressMap.get(selectedText);
         SnakesProto.GameConfig config = announcementMap.get(selectedText).getConfig();
-        GameModel model = new GameModel("name", address, config);
+        GameModel model = new GameModel(nameField.getText(), address, config);
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/game_view.fxml"));
         GameView gameView = new GameView(model);
         model.setGameView(gameView);

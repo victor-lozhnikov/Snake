@@ -1,12 +1,10 @@
 package net.client;
 
-import javafx.application.Platform;
 import main.java.net.protocol.SnakesProto;
 import mvc.model.GameModel;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
-import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.util.Arrays;

@@ -4,7 +4,6 @@ import main.java.net.protocol.SnakesProto;
 import main.java.net.protocol.SnakesProto.Direction;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
 public class Snake {
