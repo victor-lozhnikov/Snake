@@ -41,6 +41,7 @@ public class UnicastSender implements Runnable {
                         message.getValue().getAddress(), message.getValue().getPort());
                 try {
                     model.getUnicastSocket().send(packet);
+                    //System.out.println("Sent " + message.getValue().getMessage().getTypeCase());
                     message.getValue().setLastSentTime(System.currentTimeMillis());
                     if (message.getValue().getMessage().hasAnnouncement() || message.getValue().getMessage().hasAck()) {
                         messageQueue.remove(message.getKey());

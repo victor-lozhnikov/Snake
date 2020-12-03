@@ -13,6 +13,10 @@ public class MessageHandler {
     }
 
     public void handleMessage(SnakesProto.GameMessage message, InetAddress address, int port) {
+        int playerId = model.findPlayerIdByIpAndPort(address, port);
+        if (playerId > 0 && model.findMsgSeq(playerId, message.getMsgSeq())) {
+            return;
+        }
         switch (message.getTypeCase()) {
             case ACK:
                 if (model.getMyId() < 0) {
@@ -23,6 +27,7 @@ public class MessageHandler {
             case JOIN:
                 int receiverId = model.tryJoin(message.getJoin().getName(), address, port);
                 if (receiverId > 0) {
+                    model.findMsgSeq(receiverId, message.getMsgSeq());
                     model.getUnicastSender().sendMessage(buildAckMsg(message, receiverId), address, port);
                 }
                 else {
@@ -35,7 +40,17 @@ public class MessageHandler {
                 model.getUnicastSender().sendMessage(buildAckMsg(message, message.getSenderId()), address, port);
                 break;
             case STEER:
+                if (model.getLastSteerMsg().containsKey(message.getSenderId())) {
+                    if (model.getLastSteerMsg().get(message.getSenderId()) > message.getMsgSeq()) {
+                        return;
+                    }
+                }
+                model.getLastSteerMsg().put(message.getSenderId(), message.getMsgSeq());
                 model.addNewSteerMsg(message.getSenderId(), message.getSteer());
+                model.getUnicastSender().sendMessage(buildAckMsg(message, message.getSenderId()), address, port);
+                break;
+            case ROLE_CHANGE:
+                model.setMyNodeRole(message.getRoleChange().getReceiverRole());
                 model.getUnicastSender().sendMessage(buildAckMsg(message, message.getSenderId()), address, port);
                 break;
         }

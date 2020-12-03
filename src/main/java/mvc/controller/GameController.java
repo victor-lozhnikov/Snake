@@ -5,7 +5,7 @@ import mvc.model.GameModel;
 
 public final class GameController {
 
-    private GameModel model;
+    private final GameModel model;
 
     public GameController(GameModel model) {
         this.model = model;
@@ -38,6 +38,10 @@ public final class GameController {
     }
 
     private void sendSteerMsg(SnakesProto.GameMessage.SteerMsg msg) {
+        if (model.getNodeRole() == SnakesProto.NodeRole.VIEWER) {
+            return;
+        }
+
         if (model.getNodeRole() == SnakesProto.NodeRole.MASTER) {
             model.addNewSteerMsg(model.getMyId(), msg);
         }

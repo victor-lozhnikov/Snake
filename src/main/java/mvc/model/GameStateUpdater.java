@@ -31,9 +31,26 @@ public class GameStateUpdater extends TimerTask {
             model.addSnakeBodyToField(snake);
         }
         for (Snake snake : model.getSnakeMap().values()) {
-            model.addSnakeHeadToField(snake);
+            int ret = model.addSnakeHeadToField(snake);
+            if (ret == 0) {
+                continue;
+            }
+            if (ret == 2) {
+                model.removeSnake(snake);
+            }
+            for (Snake snake1 : model.getSnakeMap().values()) {
+                if (snake.equals(snake1)) {
+                    continue;
+                }
+                if (Arrays.equals(snake.getKeyPoints().get(0), snake1.getKeyPoints().get(0))) {
+                    model.removeSnake(snake1);
+                }
+            }
+            model.removeSnake(snake);
         }
-        model.updateFood();
+
+        model.addNecessaryFood();
+        model.fillCells();
 
         sendGameStateMsg();
 
