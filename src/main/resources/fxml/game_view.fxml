@@ -1,11 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.scene.canvas.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.canvas.Canvas?>
+<?import javafx.scene.text.*?>
 
 <AnchorPane onKeyPressed="#onKeyPressed" prefHeight="600.0" prefWidth="900.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="mvc.view.GameView">
 
    <Canvas fx:id="cells" layoutX="10" layoutY="10" />
+   <Text layoutX="658.0" layoutY="70.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Рейтинг игроков">
+      <font>
+         <Font size="18.0" />
+      </font>
+   </Text>
+   <ListView fx:id="ratingList" layoutX="600.0" layoutY="100.0" prefHeight="400.0" prefWidth="250.0" />
+   <Button fx:id="exitButton" onMouseClicked="#exitGame" layoutX="674.0" layoutY="530.0" mnemonicParsing="false" text="Покинуть игру" />
 
 </AnchorPane>

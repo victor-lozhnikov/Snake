@@ -55,7 +55,10 @@ public class GameStateUpdater extends TimerTask {
         sendGameStateMsg();
 
         if (model.getGameView() != null) {
-            Platform.runLater(() -> model.getGameView().drawField());
+            Platform.runLater(() -> {
+                model.getGameView().drawField();
+                model.getGameView().updatePlayers();
+            });
         }
     }
 
@@ -83,7 +86,7 @@ public class GameStateUpdater extends TimerTask {
         SnakesProto.GameMessage message = builder.build();
 
         for (SnakesProto.GamePlayer player : model.getGamePlayers().getPlayersList()) {
-            if (player.getIpAddress().isBlank()) {
+            if (player.getId() == model.getMyId()) {
                 continue;
             }
             try {

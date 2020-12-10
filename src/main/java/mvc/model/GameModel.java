@@ -56,6 +56,8 @@ public final class GameModel {
 
     private InetAddress masterInetAddress;
     private int masterPort;
+    private InetAddress deputyInetAddress;
+    private int deputyPort;
 
     public enum CellType {
         EMPTY,
@@ -483,6 +485,14 @@ public final class GameModel {
     }
 
     public void setMyNodeRole(SnakesProto.NodeRole myNodeRole) {
+        if (myNodeRole == SnakesProto.NodeRole.MASTER) {
+            try {
+                initMaster();
+            }
+            catch (IOException ex) {
+                ex.printStackTrace();
+            }
+        }
         this.myNodeRole = myNodeRole;
     }
 
@@ -493,6 +503,8 @@ public final class GameModel {
         }
         if (activePlayers == 1) {
             addNewGamePlayer(newSnake, lastId + 1, name, address.getHostName(), port, SnakesProto.NodeRole.DEPUTY);
+            deputyInetAddress = address;
+            deputyPort = port;
 
             SnakesProto.GameMessage.Builder builder = SnakesProto.GameMessage.newBuilder();
             SnakesProto.GameMessage.RoleChangeMsg.Builder msg = SnakesProto.GameMessage.RoleChangeMsg.newBuilder();
@@ -539,7 +551,10 @@ public final class GameModel {
         fillCells();
 
         if (gameView != null) {
-            Platform.runLater(() -> gameView.drawField());
+            Platform.runLater(() -> {
+                gameView.drawField();
+                gameView.updatePlayers();
+            });
         }
     }
 
@@ -609,12 +624,19 @@ public final class GameModel {
             }
         }
         snakeMap.remove(snake.getId());
+
+        if (snake.getState() == SnakesProto.GameState.Snake.SnakeState.ZOMBIE) {
+            return;
+        }
+
         gamePlayers.get(snake.getId()).setNodeRole(SnakesProto.NodeRole.VIEWER);
 
         if (snake.getId() == myId) {
             myNodeRole = SnakesProto.NodeRole.VIEWER;
             announcementPinger.cancel();
             gameStateUpdater.cancel();
+            unicastSender.clearMessageQueue();
+            notifyDeputyAboutMyDeath();
             return;
         }
 
@@ -633,6 +655,32 @@ public final class GameModel {
         catch (IOException ex) {
             ex.printStackTrace();
         }
+
+        activePlayers--;
+    }
+
+    private void notifyDeputyAboutMyDeath() {
+        for (Player player : gamePlayers.values()) {
+            if (player.getNodeRole() == SnakesProto.NodeRole.DEPUTY) {
+                player.setNodeRole(SnakesProto.NodeRole.MASTER);
+                break;
+            }
+        }
+        SnakesProto.GameMessage.Builder builder = SnakesProto.GameMessage.newBuilder();
+        SnakesProto.GameMessage.RoleChangeMsg.Builder msg = SnakesProto.GameMessage.RoleChangeMsg.newBuilder();
+        msg.setSenderRole(SnakesProto.NodeRole.VIEWER);
+        msg.setReceiverRole(SnakesProto.NodeRole.MASTER);
+        builder.setRoleChange(msg);
+        builder.setMsgSeq(lastMsgSeq);
+        iterateLastMsqSeq();
+        unicastSender.sendMessage(builder.build(), deputyInetAddress, deputyPort);
+
+        masterInetAddress = deputyInetAddress;
+        masterPort = deputyPort;
+    }
+
+    private void notifyAllAboutNewMaster() {
+
     }
 
     public void destroy() {

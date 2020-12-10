@@ -139,4 +139,12 @@ public class Snake {
         }
         return builder.build();
     }
+
+    public SnakesProto.GameState.Snake.SnakeState getState() {
+        return state;
+    }
+
+    public void setState(SnakesProto.GameState.Snake.SnakeState state) {
+        this.state = state;
+    }
 }

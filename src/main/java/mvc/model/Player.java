@@ -2,8 +2,6 @@ package mvc.model;
 
 import main.java.net.protocol.SnakesProto;
 
-import java.net.InetAddress;
-
 public class Player {
     private String name;
     private int id;
