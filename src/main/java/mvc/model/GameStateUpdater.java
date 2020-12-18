@@ -21,7 +21,10 @@ public class GameStateUpdater extends TimerTask {
                 new ConcurrentLinkedDeque<>(model.getSteerMsgQueue());
         model.clearSteerMsgQueue();
         for (Map.Entry<Integer, SnakesProto.GameMessage.SteerMsg> msg : currentQueue) {
-            model.getSnakeById(msg.getKey()).trySetDirection(msg.getValue().getDirection());
+            Snake snake = model.getSnakeById(msg.getKey());
+            if (snake != null) {
+                snake.trySetDirection(msg.getValue().getDirection());
+            }
         }
         for (Snake snake : model.getSnakeMap().values()) {
             snake.makeMove();

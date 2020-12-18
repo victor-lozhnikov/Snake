@@ -447,6 +447,7 @@ public final class GameModel {
     }
 
     public Snake getSnakeById (int id) {
+        if (!snakeMap.containsKey(id)) return null;
         return snakeMap.get(id);
     }
 
@@ -773,13 +774,14 @@ public final class GameModel {
         Player player = gamePlayers.get(id);
         System.out.println(player.getName() + " вышел");
         gamePlayers.remove(id);
+        if (snakeMap.containsKey(id)) {
+            snakeMap.get(id).setState(SnakesProto.GameState.Snake.SnakeState.ZOMBIE);
+        }
         activePlayers--;
         if (myNodeRole == SnakesProto.NodeRole.DEPUTY && player.getNodeRole() == SnakesProto.NodeRole.MASTER) {
-            snakeMap.get(id).setState(SnakesProto.GameState.Snake.SnakeState.ZOMBIE);
             setMyNodeRole(SnakesProto.NodeRole.MASTER);
         }
         else if (myNodeRole == SnakesProto.NodeRole.MASTER && player.getNodeRole() == SnakesProto.NodeRole.DEPUTY) {
-            snakeMap.get(id).setState(SnakesProto.GameState.Snake.SnakeState.ZOMBIE);
             hasDeputy = false;
             tryFindDeputy();
         }
