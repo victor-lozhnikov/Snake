@@ -53,8 +53,10 @@ public class GameView {
         cellColors.put(GameModel.CellType.EMPTY, Color.WHITE);
         cellColors.put(GameModel.CellType.MY_HEAD, Color.DARKGREEN);
         cellColors.put(GameModel.CellType.MY_BODY, Color.GREEN);
-        cellColors.put(GameModel.CellType.ENEMY_HEAD, Color.GRAY);
-        cellColors.put(GameModel.CellType.ENEMY_BODY, Color.DARKGRAY);
+        cellColors.put(GameModel.CellType.ENEMY_HEAD, Color.DARKBLUE);
+        cellColors.put(GameModel.CellType.ENEMY_BODY, Color.MEDIUMBLUE);
+        cellColors.put(GameModel.CellType.ZOMBIE_HEAD, Color.GRAY);
+        cellColors.put(GameModel.CellType.ZOMBIE_BODY, Color.DARKGRAY);
         cellColors.put(GameModel.CellType.FOOD, Color.RED);
     }
 

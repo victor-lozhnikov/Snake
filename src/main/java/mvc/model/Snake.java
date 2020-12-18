@@ -101,7 +101,9 @@ public class Snake {
 
         if (model.getCells()[keyPoints.get(0)[0]][keyPoints.get(0)[1]] == GameModel.CellType.FOOD) {
             model.removeFood(keyPoints.get(0)[0], keyPoints.get(0)[1]);
-            model.getPlayerMap().get(id).iterateScore();
+            if (model.getPlayerMap().containsKey(id)) {
+                model.getPlayerMap().get(id).iterateScore();
+            }
             return;
         }
 

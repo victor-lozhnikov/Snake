@@ -42,6 +42,7 @@ public final class GameModel {
     private int lastId = 1;
     private int stateOrder = 1;
     private int activePlayers = 0;
+    private boolean hasDeputy = false;
 
     private SnakesProto.GameConfig gameConfig;
     private SnakesProto.NodeRole myNodeRole;
@@ -65,6 +66,8 @@ public final class GameModel {
         MY_BODY,
         ENEMY_HEAD,
         ENEMY_BODY,
+        ZOMBIE_HEAD,
+        ZOMBIE_BODY,
         FOOD
     }
 
@@ -215,6 +218,9 @@ public final class GameModel {
         if (snake.getId() == myId) {
             type = CellType.MY_BODY;
         }
+        else if (snake.getState() == SnakesProto.GameState.Snake.SnakeState.ZOMBIE) {
+            type = CellType.ZOMBIE_BODY;
+        }
         else {
             type = CellType.ENEMY_BODY;
         }
@@ -255,6 +261,9 @@ public final class GameModel {
         CellType type;
         if (snake.getId() == myId) {
             type = CellType.MY_HEAD;
+        }
+        else if (snake.getState() == SnakesProto.GameState.Snake.SnakeState.ZOMBIE) {
+            type = CellType.ZOMBIE_HEAD;
         }
         else {
             type = CellType.ENEMY_HEAD;
@@ -519,6 +528,7 @@ public final class GameModel {
             addNewGamePlayer(newSnake, lastId + 1, name, address.getHostName(), port, SnakesProto.NodeRole.DEPUTY);
             deputyInetAddress = address;
             deputyPort = port;
+            hasDeputy = true;
 
             SnakesProto.GameMessage.Builder builder = SnakesProto.GameMessage.newBuilder();
             SnakesProto.GameMessage.RoleChangeMsg.Builder msg = SnakesProto.GameMessage.RoleChangeMsg.newBuilder();
@@ -552,6 +562,7 @@ public final class GameModel {
                     deputyInetAddress = InetAddress.getByName(player.getIpAddress());
                     deputyPort = player.getPort();
                     unicastSender.sendMessage(builder.build(), deputyInetAddress, deputyPort);
+                    hasDeputy = true;
                 }
                 catch (IOException ex) {
                     ex.printStackTrace();
@@ -580,6 +591,7 @@ public final class GameModel {
 
         gamePlayers.clear();
         activePlayers = 0;
+        hasDeputy = false;
         for (SnakesProto.GamePlayer player : state.getPlayers().getPlayersList()) {
             Player toPut = new Player(player);
             if (player.getIpAddress().isBlank()) {
@@ -589,6 +601,16 @@ public final class GameModel {
             gamePlayers.put(player.getId(), toPut);
             if (player.getRole() != SnakesProto.NodeRole.VIEWER) {
                 activePlayers++;
+            }
+            if (player.getRole() == SnakesProto.NodeRole.DEPUTY) {
+                try {
+                    hasDeputy = true;
+                    deputyInetAddress = InetAddress.getByName(player.getIpAddress());
+                    deputyPort = player.getPort();
+                }
+                catch (IOException ex) {
+                    ex.printStackTrace();
+                }
             }
             lastId = Math.max(lastId, player.getId());
         }
@@ -705,6 +727,7 @@ public final class GameModel {
     }
 
     private void notifyDeputyAboutMyDeath() {
+        if (!hasDeputy) return;
         for (Player player : gamePlayers.values()) {
             if (player.getNodeRole() == SnakesProto.NodeRole.DEPUTY) {
                 player.setNodeRole(SnakesProto.NodeRole.MASTER);
@@ -761,12 +784,15 @@ public final class GameModel {
         }
         else if (myNodeRole == SnakesProto.NodeRole.MASTER && player.getNodeRole() == SnakesProto.NodeRole.DEPUTY) {
             snakeMap.get(id).setState(SnakesProto.GameState.Snake.SnakeState.ZOMBIE);
+            hasDeputy = false;
             tryFindDeputy();
         }
         else if (myNodeRole == SnakesProto.NodeRole.NORMAL && player.getNodeRole() == SnakesProto.NodeRole.MASTER) {
-            unicastSender.readdressMessages(masterInetAddress, masterPort, deputyInetAddress, deputyPort);
-            masterInetAddress = deputyInetAddress;
-            masterPort = deputyPort;
+            if (hasDeputy) {
+                unicastSender.readdressMessages(masterInetAddress, masterPort, deputyInetAddress, deputyPort);
+                masterInetAddress = deputyInetAddress;
+                masterPort = deputyPort;
+            }
         }
     }
 
