@@ -336,10 +336,6 @@ public final class GameModel {
         return foodPerPlayer;
     }
 
-    public int getStateDelay() {
-        return stateDelay;
-    }
-
     public float getDeadFoodProb() {
         return deadFoodProb;
     }

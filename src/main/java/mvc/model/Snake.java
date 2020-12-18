@@ -10,9 +10,9 @@ public class Snake {
 
     private Direction direction;
     private Direction nextDirection;
-    private List<int[]> keyPoints;
-    private GameModel model;
-    private int id;
+    private final List<int[]> keyPoints;
+    private final GameModel model;
+    private final int id;
     private SnakesProto.GameState.Snake.SnakeState state;
 
     public Snake(GameModel model, int id, int headX, int headY, Direction direction) {

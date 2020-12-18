@@ -12,9 +12,9 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class MulticastReceiver implements Runnable {
-    private GamesListView gamesListView;
+    private final GamesListView gamesListView;
     private final MulticastSocket socket;
-    private Map<InetSocketAddress, SnakesProto.GameMessage.AnnouncementMsg> currentAnnouncements;
+    private final  Map<InetSocketAddress, SnakesProto.GameMessage.AnnouncementMsg> currentAnnouncements;
 
     public MulticastReceiver(GamesListView gamesListView) throws IOException {
         InetAddress group = InetAddress.getByName(Constants.MULTICAST_IP);
@@ -35,7 +35,7 @@ public class MulticastReceiver implements Runnable {
                 SnakesProto.GameMessage message = SnakesProto.GameMessage.parseFrom(
                         Arrays.copyOf(packet.getData(), packet.getLength()));
                 currentAnnouncements.put((InetSocketAddress) packet.getSocketAddress(), message.getAnnouncement());
-                Platform.runLater(() -> gamesListView.update());
+                Platform.runLater(gamesListView::update);
             }
             catch (SocketTimeoutException ignored) {}
             catch (IOException ex) {

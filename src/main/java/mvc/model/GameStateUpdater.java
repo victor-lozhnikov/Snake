@@ -9,7 +9,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
 public class GameStateUpdater extends TimerTask {
-    private GameModel model;
+    private final GameModel model;
 
     public GameStateUpdater(GameModel model) {
         this.model = model;

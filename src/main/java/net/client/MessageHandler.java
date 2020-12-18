@@ -4,10 +4,9 @@ import main.java.net.protocol.SnakesProto;
 import mvc.model.GameModel;
 
 import java.net.InetAddress;
-import java.util.Map;
 
 public class MessageHandler {
-    private GameModel model;
+    private final GameModel model;
 
     public MessageHandler(GameModel model) {
         this.model = model;

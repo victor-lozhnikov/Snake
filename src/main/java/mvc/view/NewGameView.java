@@ -46,65 +46,57 @@ public class NewGameView {
         slider1.setMax(100);
         slider1.setValue(40);
         label1.setText(String.format("%d", Math.round(slider1.getValue())));
-        slider1.valueProperty().addListener((observableValue, old_val, new_val) -> {
-            label1.setText(String.format("%d", Math.round((double) new_val)));
-        });
+        slider1.valueProperty().addListener((observableValue, old_val, new_val) ->
+                label1.setText(String.format("%d", Math.round((double) new_val))));
 
         slider2.setMin(10);
         slider2.setMax(100);
         slider2.setValue(30);
         label2.setText(String.format("%d", Math.round(slider2.getValue())));
-        slider2.valueProperty().addListener((observableValue, old_val, new_val) -> {
-            label2.setText(String.format("%d", Math.round((double) new_val)));
-        });
+        slider2.valueProperty().addListener((observableValue, old_val, new_val) ->
+                label2.setText(String.format("%d", Math.round((double) new_val))));
 
         slider3.setMin(0);
         slider3.setMax(100);
         slider3.setValue(1);
         label3.setText(String.format("%d", Math.round(slider3.getValue())));
-        slider3.valueProperty().addListener((observableValue, old_val, new_val) -> {
-            label3.setText(String.format("%d", Math.round((double) new_val)));
-        });
+        slider3.valueProperty().addListener((observableValue, old_val, new_val) ->
+                label3.setText(String.format("%d", Math.round((double) new_val))));
 
         slider4.setMin(0);
         slider4.setMax(100);
         slider4.setValue(1);
         label4.setText(String.format("%d", Math.round(slider4.getValue())));
-        slider4.valueProperty().addListener((observableValue, old_val, new_val) -> {
-            label4.setText(String.format("%d", Math.round((double) new_val)));
-        });
+        slider4.valueProperty().addListener((observableValue, old_val, new_val) ->
+                label4.setText(String.format("%d", Math.round((double) new_val))));
 
         slider5.setMin(100);
         slider5.setMax(10000);
         slider5.setValue(1000);
         label5.setText(String.format("%d", roundInt(Math.round(slider5.getValue()), 100)));
-        slider5.valueProperty().addListener((observableValue, old_val, new_val) -> {
-            label5.setText(String.format("%d", roundInt(Math.round((double) new_val), 100)));
-        });
+        slider5.valueProperty().addListener((observableValue, old_val, new_val) ->
+                label5.setText(String.format("%d", roundInt(Math.round((double) new_val), 100))));
 
         slider6.setMin(0);
         slider6.setMax(1);
         slider6.setValue(0.1);
         label6.setText(String.format("%.2f", slider6.getValue()).replace(",", "."));
-        slider6.valueProperty().addListener((observableValue, old_val, new_val) -> {
-            label6.setText(String.format("%.2f", (double) new_val).replace(",", "."));
-        });
+        slider6.valueProperty().addListener((observableValue, old_val, new_val) ->
+                label6.setText(String.format("%.2f", (double) new_val).replace(",", ".")));
 
         slider7.setMin(100);
         slider7.setMax(10000);
         slider7.setValue(100);
         label7.setText(String.format("%d", roundInt(Math.round(slider7.getValue()), 100)));
-        slider7.valueProperty().addListener((observableValue, old_val, new_val) -> {
-            label7.setText(String.format("%d", roundInt(Math.round((double) new_val), 100)));
-        });
+        slider7.valueProperty().addListener((observableValue, old_val, new_val) ->
+                label7.setText(String.format("%d", roundInt(Math.round((double) new_val), 100))));
 
         slider8.setMin(100);
         slider8.setMax(10000);
         slider8.setValue(800);
         label8.setText(String.format("%d", roundInt(Math.round(slider8.getValue()), 100)));
-        slider8.valueProperty().addListener((observableValue, old_val, new_val) -> {
-            label8.setText(String.format("%d", roundInt(Math.round((double) new_val), 100)));
-        });
+        slider8.valueProperty().addListener((observableValue, old_val, new_val) ->
+                label8.setText(String.format("%d", roundInt(Math.round((double) new_val), 100))));
     }
 
     public long roundInt(long val, int del) {

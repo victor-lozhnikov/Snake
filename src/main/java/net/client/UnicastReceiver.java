@@ -13,9 +13,9 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class UnicastReceiver implements Runnable {
-    private GameModel model;
-    private MessageHandler messageHandler;
-    private Map<Integer, Long> lastMessageReceive;
+    private final GameModel model;
+    private final MessageHandler messageHandler;
+    private final Map<Integer, Long> lastMessageReceive;
 
     public UnicastReceiver(GameModel model) {
         this.model = model;

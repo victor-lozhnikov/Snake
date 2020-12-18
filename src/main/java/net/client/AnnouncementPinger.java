@@ -9,8 +9,8 @@ import java.net.InetAddress;
 import java.util.TimerTask;
 
 public class AnnouncementPinger extends TimerTask {
-    private InetAddress multicastAddress;
-    private GameModel model;
+    private final InetAddress multicastAddress;
+    private final GameModel model;
 
     public AnnouncementPinger(GameModel model) throws IOException {
         multicastAddress = InetAddress.getByName(Constants.MULTICAST_IP);
