@@ -110,8 +110,8 @@ public final class GameModel {
         this.masterInetAddress = masterAddress.getAddress();
         this.masterPort = masterAddress.getPort();
 
-        initUnicastClient();
         initFields();
+        initUnicastClient();
 
         SnakesProto.GameMessage.Builder gameMessageBuilder = SnakesProto.GameMessage.newBuilder();
         SnakesProto.GameMessage.JoinMsg.Builder joinMsg = SnakesProto.GameMessage.JoinMsg.newBuilder();
@@ -163,6 +163,7 @@ public final class GameModel {
         gameStateUpdater = new GameStateUpdater(this);
         gameStateUpdaterTimer = new Timer();
         gameStateUpdaterTimer.schedule(gameStateUpdater, stateDelay, stateDelay);
+        tryFindDeputy();
     }
 
     public int getFieldWidth() {
@@ -484,16 +485,29 @@ public final class GameModel {
         return lastSteerMsg;
     }
 
+    public void setMasterInetAddress(InetAddress masterInetAddress) {
+        this.masterInetAddress = masterInetAddress;
+    }
+
+    public void setMasterPort(int masterPort) {
+        this.masterPort = masterPort;
+    }
+
     public void setMyNodeRole(SnakesProto.NodeRole myNodeRole) {
+        this.myNodeRole = myNodeRole;
+        if (gamePlayers.containsKey(myId)) {
+            gamePlayers.get(myId).setNodeRole(myNodeRole);
+        }
         if (myNodeRole == SnakesProto.NodeRole.MASTER) {
             try {
                 initMaster();
+                notifyAllAboutNewMaster();
             }
             catch (IOException ex) {
                 ex.printStackTrace();
             }
         }
-        this.myNodeRole = myNodeRole;
+        System.out.println("My role : " + myNodeRole);
     }
 
     public int tryJoin (String name, InetAddress address, int port) {
@@ -519,7 +533,32 @@ public final class GameModel {
             addNewGamePlayer(newSnake, lastId + 1, name, address.getHostName(), port, SnakesProto.NodeRole.NORMAL);
         }
         lastId++;
+        activePlayers++;
         return lastId;
+    }
+
+    private void tryFindDeputy() {
+        for (Player player : gamePlayers.values()) {
+            if (player.getId() == myId) continue;
+            if (player.getNodeRole() == SnakesProto.NodeRole.NORMAL) {
+                SnakesProto.GameMessage.Builder builder = SnakesProto.GameMessage.newBuilder();
+                SnakesProto.GameMessage.RoleChangeMsg.Builder msg = SnakesProto.GameMessage.RoleChangeMsg.newBuilder();
+                msg.setSenderRole(SnakesProto.NodeRole.MASTER);
+                msg.setReceiverRole(SnakesProto.NodeRole.DEPUTY);
+                builder.setRoleChange(msg);
+                builder.setMsgSeq(lastMsgSeq);
+                iterateLastMsqSeq();
+                try {
+                    deputyInetAddress = InetAddress.getByName(player.getIpAddress());
+                    deputyPort = player.getPort();
+                    unicastSender.sendMessage(builder.build(), deputyInetAddress, deputyPort);
+                }
+                catch (IOException ex) {
+                    ex.printStackTrace();
+                }
+                break;
+            }
+        }
     }
 
     public void setState(SnakesProto.GameState state) {
@@ -542,10 +581,16 @@ public final class GameModel {
         gamePlayers.clear();
         activePlayers = 0;
         for (SnakesProto.GamePlayer player : state.getPlayers().getPlayersList()) {
-            gamePlayers.put(player.getId(), new Player(player));
+            Player toPut = new Player(player);
+            if (player.getIpAddress().isBlank()) {
+                toPut.setIpAddress(masterInetAddress.getHostName());
+                toPut.setPort(masterPort);
+            }
+            gamePlayers.put(player.getId(), toPut);
             if (player.getRole() != SnakesProto.NodeRole.VIEWER) {
                 activePlayers++;
             }
+            lastId = Math.max(lastId, player.getId());
         }
 
         fillCells();
@@ -680,7 +725,49 @@ public final class GameModel {
     }
 
     private void notifyAllAboutNewMaster() {
+        for (Player player : gamePlayers.values()) {
+            if (player.getId() == myId) {
+                continue;
+            }
 
+            SnakesProto.GameMessage.Builder builder = SnakesProto.GameMessage.newBuilder();
+            SnakesProto.GameMessage.RoleChangeMsg.Builder msg = SnakesProto.GameMessage.RoleChangeMsg.newBuilder();
+            msg.setSenderRole(SnakesProto.NodeRole.MASTER);
+            msg.setReceiverRole(player.getNodeRole());
+            builder.setRoleChange(msg);
+            builder.setMsgSeq(lastMsgSeq);
+            iterateLastMsqSeq();
+            try {
+                unicastSender.sendMessage(builder.build(), InetAddress.getByName(player.getIpAddress()),
+                        player.getPort());
+            }
+            catch (IOException ex) {
+                ex.printStackTrace();
+            }
+        }
+    }
+
+    public void removePlayer(int id) {
+        if (!gamePlayers.containsKey(id)) {
+            return;
+        }
+        Player player = gamePlayers.get(id);
+        System.out.println(player.getName() + " вышел");
+        gamePlayers.remove(id);
+        activePlayers--;
+        if (myNodeRole == SnakesProto.NodeRole.DEPUTY && player.getNodeRole() == SnakesProto.NodeRole.MASTER) {
+            snakeMap.get(id).setState(SnakesProto.GameState.Snake.SnakeState.ZOMBIE);
+            setMyNodeRole(SnakesProto.NodeRole.MASTER);
+        }
+        else if (myNodeRole == SnakesProto.NodeRole.MASTER && player.getNodeRole() == SnakesProto.NodeRole.DEPUTY) {
+            snakeMap.get(id).setState(SnakesProto.GameState.Snake.SnakeState.ZOMBIE);
+            tryFindDeputy();
+        }
+        else if (myNodeRole == SnakesProto.NodeRole.NORMAL && player.getNodeRole() == SnakesProto.NodeRole.MASTER) {
+            unicastSender.readdressMessages(masterInetAddress, masterPort, deputyInetAddress, deputyPort);
+            masterInetAddress = deputyInetAddress;
+            masterPort = deputyPort;
+        }
     }
 
     public void destroy() {
